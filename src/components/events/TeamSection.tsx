@@ -33,12 +33,12 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
   };
 
   const handleCreateTeamClick = () => {
-    console.log('Create team button clicked');
+    console.log('Create team button clicked, competitionId:', competitionId);
     setIsCreateModalOpen(true);
   };
 
   const handleJoinTeamClick = () => {
-    console.log('Join team button clicked');
+    console.log('Join team button clicked, competitionId:', competitionId);
     setIsJoinModalOpen(true);
   };
 
@@ -194,28 +194,24 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
         </CardContent>
       </Card>
 
-      {/* Modals */}
-      {competitionId && (
-        <>
-          <CreateTeamModal
-            isOpen={isCreateModalOpen}
-            onClose={() => {
-              console.log('Closing create modal');
-              setIsCreateModalOpen(false);
-            }}
-            competitionId={competitionId}
-            onSuccess={handleTeamSuccess}
-          />
-          <JoinTeamModal
-            isOpen={isJoinModalOpen}
-            onClose={() => {
-              console.log('Closing join modal');
-              setIsJoinModalOpen(false);
-            }}
-            onSuccess={handleTeamSuccess}
-          />
-        </>
-      )}
+      {/* Modals - Always render when buttons are pressed */}
+      <CreateTeamModal
+        isOpen={isCreateModalOpen}
+        onClose={() => {
+          console.log('Closing create modal');
+          setIsCreateModalOpen(false);
+        }}
+        competitionId={competitionId || ''}
+        onSuccess={handleTeamSuccess}
+      />
+      <JoinTeamModal
+        isOpen={isJoinModalOpen}
+        onClose={() => {
+          console.log('Closing join modal');
+          setIsJoinModalOpen(false);
+        }}
+        onSuccess={handleTeamSuccess}
+      />
     </div>
   );
 };
