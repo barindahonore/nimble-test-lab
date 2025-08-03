@@ -34,6 +34,8 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
 
   const handleCreateTeamClick = () => {
     console.log('Create team button clicked, competitionId:', competitionId);
+    console.log('competitionId type:', typeof competitionId);
+    console.log('competitionId is defined:', competitionId !== undefined);
     setIsCreateModalOpen(true);
   };
 
