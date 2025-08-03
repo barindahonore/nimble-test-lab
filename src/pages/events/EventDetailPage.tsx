@@ -82,12 +82,14 @@ const EventDetailPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-4xl mx-auto space-y-8">
-            <Skeleton className="h-64 w-full rounded-xl" />
-            <Skeleton className="h-32 w-full rounded-xl" />
-            <Skeleton className="h-48 w-full rounded-xl" />
+      <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/10">
+        <div className="container mx-auto px-4 py-12">
+          <div className="max-w-6xl mx-auto space-y-8">
+            <div className="animate-pulse space-y-8">
+              <div className="h-80 bg-gradient-to-r from-muted/50 to-muted/30 rounded-3xl" />
+              <div className="h-32 bg-gradient-to-r from-muted/30 to-muted/20 rounded-2xl" />
+              <div className="h-48 bg-gradient-to-r from-muted/40 to-muted/25 rounded-2xl" />
+            </div>
           </div>
         </div>
       </div>
@@ -96,14 +98,20 @@ const EventDetailPage = () => {
 
   if (error || !event) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-4xl mx-auto">
-            <Alert variant="destructive" className="border-destructive/20 bg-destructive/5">
-              <AlertDescription className="text-destructive">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/10">
+        <div className="container mx-auto px-4 py-12">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center py-20">
+              <div className="w-20 h-20 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="text-4xl">⚠️</span>
+              </div>
+              <h2 className="text-2xl font-bold text-destructive mb-4">
                 {error || 'Event not found'}
-              </AlertDescription>
-            </Alert>
+              </h2>
+              <p className="text-muted-foreground">
+                The event you're looking for might have been removed or is currently unavailable.
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -111,9 +119,9 @@ const EventDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-accent/10">
+      <div className="container mx-auto px-4 py-12">
+        <div className="max-w-6xl mx-auto space-y-12">
           <EventHeader event={event} />
           
           <EventActions
