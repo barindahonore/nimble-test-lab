@@ -87,7 +87,7 @@ export const JoinTeamModal: React.FC<JoinTeamModalProps> = ({
               <Input
                 id="invitationCode"
                 value={invitationCode}
-                onChange={(e) => setInvitationCode(e.target.value.toUpperCase())}
+                onChange={(e) => setInvitationCode(e.target.value)}
                 className="font-mono"
                 placeholder="Enter invitation code"
                 disabled={isLoading}
