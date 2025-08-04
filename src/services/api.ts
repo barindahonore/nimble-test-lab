@@ -124,10 +124,11 @@ export interface EventFilters {
 }
 
 export interface JudgingCriterion {
-  id: string;
+  id?: string;
   name: string;
-  description: string;
-  weight: number;
+  description?: string;
+  weight?: number; // Keep for backward compatibility with forms
+  maxScore?: number; // Add for API response compatibility
 }
 
 export interface Event {
