@@ -135,7 +135,7 @@ const StudentEventDetailPage = () => {
           <TeamSection
             teamStatus={teamStatus}
             isTeamBased={event.competition.isTeamBased}
-            competitionId={event.competition.id}
+            competitionId={event.id}
             onTeamUpdate={handleTeamUpdate}
           />
         )}
