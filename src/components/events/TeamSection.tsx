@@ -11,7 +11,7 @@ import { JoinTeamModal } from './JoinTeamModal';
 interface TeamSectionProps {
   teamStatus: MyTeam | null;
   isTeamBased: boolean;
-  competitionId?: string;
+  competitionId: string;
   onTeamUpdate: () => void;
 }
 
@@ -33,15 +33,14 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
   };
 
   const handleCreateTeamClick = () => {
-    console.log('Create team button clicked, competitionId:', competitionId);
-    console.log('competitionId type:', typeof competitionId);
-    console.log('competitionId is defined:', competitionId !== undefined);
-    console.log('competitionId length:', competitionId?.length);
+    if (!competitionId) {
+      console.error('Cannot create team: competitionId is missing');
+      return;
+    }
     setIsCreateModalOpen(true);
   };
 
   const handleJoinTeamClick = () => {
-    console.log('Join team button clicked, competitionId:', competitionId);
     setIsJoinModalOpen(true);
   };
 
@@ -200,19 +199,13 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
       {/* Modals - Always render when buttons are pressed */}
       <CreateTeamModal
         isOpen={isCreateModalOpen}
-        onClose={() => {
-          console.log('Closing create modal');
-          setIsCreateModalOpen(false);
-        }}
-        competitionId={competitionId || ''}
+        onClose={() => setIsCreateModalOpen(false)}
+        competitionId={competitionId}
         onSuccess={handleTeamSuccess}
       />
       <JoinTeamModal
         isOpen={isJoinModalOpen}
-        onClose={() => {
-          console.log('Closing join modal');
-          setIsJoinModalOpen(false);
-        }}
+        onClose={() => setIsJoinModalOpen(false)}
         onSuccess={handleTeamSuccess}
       />
     </div>

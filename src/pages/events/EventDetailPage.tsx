@@ -136,7 +136,7 @@ const EventDetailPage = () => {
             <CompetitionInfo competition={event.competition} />
           )}
           
-          {user && registration && event.competition && (
+          {user && registration && event.competition && event.competition.id && (
             <TeamSection
               teamStatus={teamStatus}
               isTeamBased={event.competition.isTeamBased}

@@ -34,9 +34,6 @@ export const CreateTeamModal: React.FC<CreateTeamModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('CreateTeamModal - About to create team with competitionId:', competitionId);
-    console.log('CreateTeamModal - competitionId type:', typeof competitionId);
-    
     if (!teamName.trim()) {
       toast({
         title: 'Invalid Team Name',
