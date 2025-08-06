@@ -351,4 +351,21 @@ export const getMyEventRegistration = async (eventId: string): Promise<EventRegi
   }
 };
 
+// Leaderboard API
+export interface LeaderboardEntry {
+  finalScore: number;
+  team?: {
+    name: string;
+  };
+  submitter?: {
+    firstName: string;
+    lastName: string;
+  };
+}
+
+export const getCompetitionLeaderboard = async (competitionId: string): Promise<LeaderboardEntry[]> => {
+  const response = await api.get(`/competitions/${competitionId}/leaderboard`);
+  return response.data.data;
+};
+
 export default api;
