@@ -120,7 +120,10 @@ const StudentEventDetailPage = () => {
         />
         
         {event.competition && (
-          <CompetitionInfo competition={event.competition} />
+          <CompetitionInfo 
+            competition={event.competition} 
+            eventEndTime={event.endTime}
+          />
         )}
         
         {user && registration && event.competition && (

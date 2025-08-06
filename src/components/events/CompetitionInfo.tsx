@@ -1,24 +1,55 @@
 
-import { Trophy, Users, Target, Award } from 'lucide-react';
+import { Trophy, Users, Target, Award, BarChart3 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Competition } from '@/services/api';
 
 interface CompetitionInfoProps {
   competition: Competition;
+  eventEndTime?: string;
 }
 
-export const CompetitionInfo: React.FC<CompetitionInfoProps> = ({ competition }) => {
+export const CompetitionInfo: React.FC<CompetitionInfoProps> = ({ 
+  competition, 
+  eventEndTime 
+}) => {
+  const hasEnded = eventEndTime ? new Date(eventEndTime) < new Date() : false;
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Trophy className="w-5 h-5 text-primary" />
-          Competition Details
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Trophy className="w-5 h-5 text-primary" />
+            Competition Details
+          </CardTitle>
+          
+          {hasEnded && (
+            <Link to={`/competitions/${competition.id}/leaderboard`}>
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <BarChart3 className="w-4 h-4" />
+                View Leaderboard
+              </Button>
+            </Link>
+          )}
+        </div>
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {/* Competition Status Banner */}
+        {hasEnded && (
+          <div className="p-3 rounded-lg bg-green-50 border border-green-200">
+            <div className="flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-green-600" />
+              <span className="text-sm font-medium text-green-900">
+                Competition Concluded - Results Available
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Team Requirements Section */}
         <div>
           <div className="flex items-center gap-2 mb-2">

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -120,7 +121,10 @@ const EventDetailPage = () => {
         />
         
         {event.competition && (
-          <CompetitionInfo competition={event.competition} />
+          <CompetitionInfo 
+            competition={event.competition} 
+            eventEndTime={event.endTime}
+          />
         )}
         
         {user && registration && event.competition && (
