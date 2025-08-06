@@ -149,6 +149,7 @@ export interface Event {
 }
 
 export interface Competition {
+  eventId: string;
   id: string;
   isTeamBased: boolean;
   teamSize?: number;

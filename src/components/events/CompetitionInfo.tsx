@@ -11,11 +11,13 @@ interface CompetitionInfoProps {
   eventEndTime?: string;
 }
 
+
 export const CompetitionInfo: React.FC<CompetitionInfoProps> = ({ 
   competition, 
   eventEndTime 
 }) => {
   const hasEnded = eventEndTime ? new Date(eventEndTime) < new Date() : false;
+ 
 
   return (
     <Card>
@@ -27,7 +29,7 @@ export const CompetitionInfo: React.FC<CompetitionInfoProps> = ({
           </CardTitle>
           
           {hasEnded && (
-            <Link to={`/competitions/${competition.id}/leaderboard`}>
+            <Link to={`/competitions/${competition.eventId}/leaderboard`}>
               <Button variant="outline" size="sm" className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4" />
                 View Leaderboard

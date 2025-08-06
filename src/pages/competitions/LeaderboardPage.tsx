@@ -30,7 +30,8 @@ const LeaderboardPage: React.FC = () => {
 
         // Fetch leaderboard data if competition exists
         if (eventData.competition) {
-          const leaderboard = await getCompetitionLeaderboard(eventData.competition.id);
+          const leaderboard = await getCompetitionLeaderboard(eventData.competition.eventId);
+          console.log(leaderboard)
           setLeaderboardData(leaderboard);
         } else {
           setError('This event is not a competition or does not have results available.');

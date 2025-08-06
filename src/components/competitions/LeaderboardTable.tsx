@@ -92,7 +92,7 @@ const LeaderboardTable: React.FC<LeaderboardTableProps> = ({ leaderboardData }) 
                 {/* Score */}
                 <div className="text-right">
                   <div className="text-2xl font-bold text-primary">
-                    {entry.finalScore.toFixed(1)}
+                    {Number(entry.finalScore).toFixed(1)}
                   </div>
                   <div className="text-sm text-muted-foreground">points</div>
                 </div>
