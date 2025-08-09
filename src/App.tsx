@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
@@ -37,6 +36,7 @@ import StudentEventsPage from '@/pages/student/EventsPage';
 import StudentEventDetailPage from '@/pages/student/EventDetailPage';
 import StudentLeaderboardPage from '@/pages/student/LeaderboardPage';
 import MyTeamsPage from '@/pages/student/MyTeamsPage';
+import MySubmissionsPage from '@/pages/student/MySubmissionsPage';
 import ProfilePage from '@/pages/student/ProfilePage';
 
 // Create a client
@@ -98,6 +98,7 @@ function App() {
                 <Route path="events/:id" element={<StudentEventDetailPage />} />
                 <Route path="competitions/:id/leaderboard" element={<StudentLeaderboardPage />} />
                 <Route path="teams" element={<MyTeamsPage />} />
+                <Route path="submissions" element={<MySubmissionsPage />} />
                 <Route path="profile" element={<ProfilePage />} />
               </Route>
 
