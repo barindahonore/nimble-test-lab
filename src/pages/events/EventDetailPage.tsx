@@ -43,7 +43,7 @@ const EventDetailPage = () => {
             // Get user's submissions to check for individual submissions
             const submissions = await getMySubmissions();
             const relevantSubmission = submissions.find(sub => 
-              sub.competition.id === eventData.competition?.id
+              sub.competition.id === eventData.competition?.eventId
             );
             setUserSubmission(relevantSubmission || null);
             
@@ -92,7 +92,7 @@ const EventDetailPage = () => {
     try {
       const submissions = await getMySubmissions();
       const relevantSubmission = submissions.find(sub => 
-        sub.competition.id === event.competition?.id
+        sub.competition.id === event.competition?.eventId
       );
       setUserSubmission(relevantSubmission || null);
     } catch (error) {
@@ -160,7 +160,7 @@ const EventDetailPage = () => {
             event={event}
             teamStatus={teamStatus}
             userSubmission={userSubmission}
-            competitionId={event.competition.id}
+            competitionId={event.competition.eventId}
             onTeamUpdate={handleTeamUpdate}
             onSubmissionUpdate={handleSubmissionUpdate}
           />
