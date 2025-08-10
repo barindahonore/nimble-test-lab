@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import LeaderboardTable from '@/components/competitions/LeaderboardTable';
 import { useAuth } from '@/context/AuthContext';
-import api from '@/services/api';
+import api, { LeaderboardEntry } from '@/services/api';
 
 interface Competition {
   id: string;
@@ -23,23 +23,6 @@ interface Competition {
     name: string;
     maxScore: number;
   }>;
-}
-
-interface LeaderboardEntry {
-  id: string;
-  score: number;
-  rank: number;
-  user?: {
-    firstName: string;
-    lastName: string;
-  };
-  team?: {
-    name: string;
-    members: Array<{
-      firstName: string;
-      lastName: string;
-    }>;
-  };
 }
 
 const LeaderboardPage = () => {
