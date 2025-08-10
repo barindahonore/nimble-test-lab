@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -8,11 +7,9 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Link, FileText } from 'lucide-react';
 import { createSubmission } from '@/services/teamApi';
-import api from '@/services/api';
 
 interface SubmissionModalProps {
-  teamId?: string;
-  competitionId?: string;
+  teamId: string;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -20,7 +17,6 @@ interface SubmissionModalProps {
 
 export const SubmissionModal: React.FC<SubmissionModalProps> = ({
   teamId,
-  competitionId,
   isOpen,
   onClose,
   onSuccess,
@@ -52,20 +48,10 @@ export const SubmissionModal: React.FC<SubmissionModalProps> = ({
     setError('');
 
     try {
-      const content = {
+      await createSubmission(teamId, {
         url: url.trim(),
         description: description.trim(),
-      };
-
-      if (teamId) {
-        // Team submission
-        await createSubmission(teamId, content);
-      } else if (competitionId) {
-        // Individual submission
-        await api.post(`/competitions/${competitionId}/submission`, { content });
-      } else {
-        throw new Error('Either teamId or competitionId must be provided');
-      }
+      });
 
       toast({
         title: "Success!",
@@ -101,15 +87,13 @@ export const SubmissionModal: React.FC<SubmissionModalProps> = ({
     }
   };
 
-  const submissionType = teamId ? 'Team' : 'Individual';
-
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Submit Your {submissionType} Project
+            Submit Your Project
           </DialogTitle>
         </DialogHeader>
 

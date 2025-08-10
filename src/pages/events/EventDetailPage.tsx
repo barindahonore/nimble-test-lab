@@ -1,14 +1,15 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/context/AuthContext';
 import { getEventById, Event, EventRegistration, getMyEventRegistration } from '@/services/api';
 import { getMyTeams, MyTeam } from '@/services/teamApi';
-import { getMySubmissions, UserSubmission } from '@/services/submissionsApi';
 import { EventHeader } from '@/components/events/EventHeader';
 import { EventActions } from '@/components/events/EventActions';
 import { CompetitionInfo } from '@/components/events/CompetitionInfo';
-import { CompetitionMainSection } from '@/components/events/CompetitionMainSection';
+import { TeamSection } from '@/components/events/TeamSection';
 
 const EventDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,7 +18,6 @@ const EventDetailPage = () => {
   const [event, setEvent] = useState<Event | null>(null);
   const [registration, setRegistration] = useState<EventRegistration | null>(null);
   const [teamStatus, setTeamStatus] = useState<MyTeam | null>(null);
-  const [userSubmission, setUserSubmission] = useState<UserSubmission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,23 +38,13 @@ const EventDetailPage = () => {
           const registrationData = await getMyEventRegistration(id);
           setRegistration(registrationData);
           
-          // If registered, get additional user data
-          if (registrationData) {
-            // Get user's submissions to check for individual submissions
-            const submissions = await getMySubmissions();
-            const relevantSubmission = submissions.find(sub => 
-              sub.competition.id === eventData.competition?.eventId
+          // If registered and it's a team-based competition, get team info
+          if (registrationData && eventData.competition?.isTeamBased) {
+            const teams = await getMyTeams();
+            const relevantTeam = teams.find(team => 
+              team.competition.event.id === eventData.id
             );
-            setUserSubmission(relevantSubmission || null);
-            
-            // If it's a team-based competition, get team info
-            if (eventData.competition?.isTeamBased) {
-              const teams = await getMyTeams();
-              const relevantTeam = teams.find(team => 
-                team.competition.event.id === eventData.id
-              );
-              setTeamStatus(relevantTeam || null);
-            }
+            setTeamStatus(relevantTeam || null);
           }
         } catch (userDataError) {
           console.log('User data fetch failed (user may not be registered):', userDataError);
@@ -68,10 +58,6 @@ const EventDetailPage = () => {
     }
   };
 
-  const handleRegistrationSuccess = async () => {
-    await fetchData();
-  };
-
   const handleTeamUpdate = async () => {
     if (!user || !event?.competition?.isTeamBased) return;
     
@@ -83,20 +69,6 @@ const EventDetailPage = () => {
       setTeamStatus(relevantTeam || null);
     } catch (error) {
       console.error('Failed to refresh team data:', error);
-    }
-  };
-
-  const handleSubmissionUpdate = async () => {
-    if (!user || !event?.competition) return;
-    
-    try {
-      const submissions = await getMySubmissions();
-      const relevantSubmission = submissions.find(sub => 
-        sub.competition.id === event.competition?.eventId
-      );
-      setUserSubmission(relevantSubmission || null);
-    } catch (error) {
-      console.error('Failed to refresh submission data:', error);
     }
   };
 
@@ -145,7 +117,7 @@ const EventDetailPage = () => {
           user={user}
           registrationStatus={registration}
           teamStatus={teamStatus}
-          onRegistrationSuccess={handleRegistrationSuccess}
+          onRegistrationSuccess={fetchData}
         />
         
         {event.competition && (
@@ -156,13 +128,11 @@ const EventDetailPage = () => {
         )}
         
         {user && registration && event.competition && (
-          <CompetitionMainSection
-            event={event}
+          <TeamSection
             teamStatus={teamStatus}
-            userSubmission={userSubmission}
-            competitionId={event.competition.eventId}
+            isTeamBased={event.competition.isTeamBased}
+            competitionId={event.competition.id}
             onTeamUpdate={handleTeamUpdate}
-            onSubmissionUpdate={handleSubmissionUpdate}
           />
         )}
       </div>
