@@ -1,10 +1,9 @@
-
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Trophy, Medal, Award, Users, Calendar, MapPin } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { LeaderboardTable } from '@/components/competitions/LeaderboardTable';
+import LeaderboardTable from '@/components/competitions/LeaderboardTable';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
 
