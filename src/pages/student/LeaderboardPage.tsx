@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getEventById, getCompetitionLeaderboard, LeaderboardEntry, Event } from '@/services/api';
 import LeaderboardTable from '@/components/competitions/LeaderboardTable';
 
-const LeaderboardPage: React.FC = () => {
+const StudentLeaderboardPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [event, setEvent] = useState<Event | null>(null);
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
@@ -55,7 +55,7 @@ const LeaderboardPage: React.FC = () => {
   }, [id]);
 
   if (!id) {
-    return <Navigate to="/events" replace />;
+    return <Navigate to="/student/events" replace />;
   }
 
   if (isLoading) {
@@ -147,4 +147,4 @@ const LeaderboardPage: React.FC = () => {
   );
 };
 
-export default LeaderboardPage;
+export default StudentLeaderboardPage;

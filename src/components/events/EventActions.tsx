@@ -53,9 +53,7 @@ export const EventActions: React.FC<EventActionsProps> = ({
   };
 
   // Check if event has ended
-  const eventEndTime = new Date(event.endTime);
-  const currentTime = new Date();
-  const hasEventEnded = currentTime > eventEndTime;
+  const hasEnded = new Date(event.endTime) < new Date();
 
   if (!user) {
     return (
@@ -67,9 +65,9 @@ export const EventActions: React.FC<EventActionsProps> = ({
             <p className="text-muted-foreground mb-4">
               You need to be logged in to register for events.
             </p>
-            <Button onClick={() => navigate('/login')}>
+            <Button onClick={() => navigate('/login')} disabled={hasEnded}>
               <LogIn className="w-4 h-4 mr-2" />
-              Login to Register
+              {hasEnded ? 'Event Ended' : 'Login to Register'}
             </Button>
           </div>
         </CardContent>
@@ -109,7 +107,7 @@ export const EventActions: React.FC<EventActionsProps> = ({
     );
   }
 
-  if (hasEventEnded) {
+  if (hasEnded) {
     return (
       <Card className="border-orange-200 bg-orange-50">
         <CardContent className="p-6">
@@ -117,10 +115,7 @@ export const EventActions: React.FC<EventActionsProps> = ({
             <Clock className="w-12 h-12 text-orange-600 mx-auto mb-3" />
             <h3 className="text-lg font-semibold text-orange-900 mb-2">Event Has Ended</h3>
             <p className="text-orange-700 text-sm">
-              This event ended on {eventEndTime.toLocaleDateString()} at {eventEndTime.toLocaleTimeString()}
-            </p>
-            <p className="text-orange-600 text-sm mt-2">
-              Registration is no longer available.
+              Registration is no longer available for this event.
             </p>
           </div>
         </CardContent>
