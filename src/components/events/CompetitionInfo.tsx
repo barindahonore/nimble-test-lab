@@ -9,17 +9,15 @@ import { Competition } from '@/services/api';
 interface CompetitionInfoProps {
   competition: Competition;
   eventEndTime?: string;
-  leaderboardRoute?: string; // Optional prop to customize the leaderboard route
 }
+
 
 export const CompetitionInfo: React.FC<CompetitionInfoProps> = ({ 
   competition, 
-  eventEndTime,
-  leaderboardRoute 
+  eventEndTime 
 }) => {
   const hasEnded = eventEndTime ? new Date(eventEndTime) < new Date() : false;
-  const defaultRoute = `/competitions/${competition.eventId}/leaderboard`;
-  const routeToUse = leaderboardRoute || defaultRoute;
+ 
 
   return (
     <Card>
@@ -31,7 +29,7 @@ export const CompetitionInfo: React.FC<CompetitionInfoProps> = ({
           </CardTitle>
           
           {hasEnded && (
-            <Link to={routeToUse}>
+            <Link to={`/competitions/${competition.eventId}/leaderboard`}>
               <Button variant="outline" size="sm" className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4" />
                 View Leaderboard
