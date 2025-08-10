@@ -182,10 +182,7 @@ const LeaderboardPage = () => {
         </CardHeader>
         <CardContent>
           {leaderboard && leaderboard.length > 0 ? (
-            <LeaderboardTable
-              entries={leaderboard}
-              isTeamBased={competition.isTeamBased}
-            />
+            <LeaderboardTable leaderboardData={leaderboard} />
           ) : (
             <div className="text-center py-8">
               <Trophy className="w-12 h-12 text-gray-400 mx-auto mb-4" />
