@@ -1,123 +1,142 @@
-
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { CheckCircle, UserPlus, LogIn, Clock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { useToast } from "@/components/ui/use-toast"
+import { Calendar, Users, FileText, Flag, ShieldCheck, Trophy } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import { Event, EventRegistration, registerForEvent } from '@/services/api';
-import { MyTeam } from '@/services/teamApi';
+import { Badge } from "@/components/ui/badge"
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/context/AuthContext';
+import { Event } from '@/services/api';
+import { formatDate } from '@/lib/utils';
+import { useMutation } from '@tanstack/react-query';
+import { registerForEvent, joinTeam, createTeam, submitToCompetition } from '@/services/api';
+import TeamCreateDialog from '../teams/TeamCreateDialog';
+import TeamJoinDialog from '../teams/TeamJoinDialog';
+import SubmissionDialog from '../submissions/SubmissionDialog';
 
 interface EventActionsProps {
   event: Event;
-  user: any;
-  registrationStatus: EventRegistration | null;
-  teamStatus: MyTeam | null;
-  onRegistrationSuccess: () => void;
+  onJoinTeam?: () => void;
+  onCreateTeam?: () => void;
+  onRegister?: () => void;
+  onSubmit?: () => void;
 }
 
-export const EventActions: React.FC<EventActionsProps> = ({
-  event,
-  user,
-  registrationStatus,
-  teamStatus,
-  onRegistrationSuccess,
-}) => {
-  const [isRegistering, setIsRegistering] = useState(false);
-  const { toast } = useToast();
-  const navigate = useNavigate();
+const EventActions: React.FC<EventActionsProps> = ({ event, onJoinTeam, onCreateTeam, onRegister, onSubmit }) => {
+  const { user } = useAuth();
+  const { toast } = useToast()
+  const [isCreateTeamDialogOpen, setIsCreateTeamDialogOpen] = React.useState(false);
+  const [isJoinTeamDialogOpen, setIsJoinTeamDialogOpen] = React.useState(false);
+  const [isSubmissionDialogOpen, setIsSubmissionDialogOpen] = React.useState(false);
 
-  const handleRegister = async () => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
+  const isRegistered = event.participants?.some(participant => participant.userId === user?.id);
+  const isTeamEvent = event.type === 'TEAM';
+  const hasTeam = user?.teamMemberships?.some(teamMembership => teamMembership.team.eventId === event.id);
+  const canSubmit = event.competition && isRegistered && (event.competition.submissionType === 'TEAM' ? hasTeam : true);
 
-    setIsRegistering(true);
-    try {
-      await registerForEvent(event.id);
+  const { mutate: register, isPending: isRegistering } = useMutation({
+    mutationFn: () => registerForEvent(event.id),
+    onSuccess: () => {
       toast({
-        title: 'Registration Successful!',
-        description: 'You have been registered for this event.',
-      });
-      onRegistrationSuccess();
-    } catch (error: any) {
+        title: "Registration Successful",
+        description: "You have successfully registered for this event.",
+      })
+      onRegister?.();
+    },
+    onError: (error: any) => {
       toast({
-        title: 'Registration Failed',
-        description: error.response?.data?.message || 'Failed to register for event',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsRegistering(false);
-    }
+        title: "Registration Failed",
+        description: error.message || "Failed to register for this event. Please try again.",
+        variant: "destructive",
+      })
+    },
+  })
+
+  const { mutate: join, isPending: isJoining } = useMutation({
+    mutationFn: (teamId: string) => joinTeam(teamId),
+    onSuccess: () => {
+      toast({
+        title: "Team Join Successful",
+        description: "You have successfully joined this team.",
+      })
+      onJoinTeam?.();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Team Join Failed",
+        description: error.message || "Failed to join this team. Please try again.",
+        variant: "destructive",
+      })
+    },
+  })
+
+  const { mutate: create, isPending: isCreating } = useMutation({
+    mutationFn: (teamName: string) => createTeam(event.id, teamName),
+    onSuccess: () => {
+      toast({
+        title: "Team Creation Successful",
+        description: "You have successfully created a team for this event.",
+      })
+      onCreateTeam?.();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Team Creation Failed",
+        description: error.message || "Failed to create a team. Please try again.",
+        variant: "destructive",
+      })
+    },
+  })
+
+  const { mutate: submit, isPending: isSubmitting } = useMutation({
+    mutationFn: (submissionUrl: string) => submitToCompetition(event.competition?.eventId || '', submissionUrl),
+    onSuccess: () => {
+      toast({
+        title: "Submission Successful",
+        description: "You have successfully submitted to this competition.",
+      })
+      onSubmit?.();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Submission Failed",
+        description: error.message || "Failed to submit to this competition. Please try again.",
+        variant: "destructive",
+      })
+    },
+  })
+
+  const handleRegister = () => {
+    register();
   };
 
-  // Check if event has ended
-  const isEventEnded = new Date(event.endTime) < new Date();
+  const handleCreateTeam = (teamName: string) => {
+    create(teamName);
+    setIsCreateTeamDialogOpen(false);
+  };
+
+  const handleJoinTeam = (teamId: string) => {
+    join(teamId);
+    setIsJoinTeamDialogOpen(false);
+  };
+
+  const handleSubmit = (submissionUrl: string) => {
+    submit(submissionUrl);
+    setIsSubmissionDialogOpen(false);
+  };
+
+  const getLeaderboardLink = () => {
+    if (user?.role === 'STUDENT') {
+      return `/student/events/${event.id}/leaderboard`;
+    }
+    return `/competitions/${event.id}/leaderboard`;
+  };
 
   if (!user) {
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="text-center">
-            <LogIn className="w-12 h-12 text-primary mx-auto mb-3" />
-            <h3 className="text-lg font-semibold mb-2">Join This Event</h3>
-            <p className="text-muted-foreground mb-4">
-              You need to be logged in to register for events.
-            </p>
-            <Button onClick={() => navigate('/login')}>
-              <LogIn className="w-4 h-4 mr-2" />
-              Login to Register
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (registrationStatus) {
-    return (
-      <Card className="border-green-200 bg-green-50">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-4">
-            <CheckCircle className="w-8 h-8 text-green-600 flex-shrink-0" />
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-green-900 mb-1">
-                You're Registered!
-              </h3>
-              <p className="text-green-700 text-sm">
-                Registered on {new Date(registrationStatus.registeredAt).toLocaleDateString()}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (event.status === 'CANCELLED') {
-    return (
-      <Card className="border-destructive/20 bg-destructive/5">
-        <CardContent className="p-6">
-          <div className="text-center">
-            <p className="text-destructive font-medium">This event has been cancelled.</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (isEventEnded) {
-    return (
-      <Card className="border-orange-200 bg-orange-50">
-        <CardContent className="p-6">
-          <div className="text-center">
-            <Clock className="w-12 h-12 text-orange-600 mx-auto mb-3" />
-            <h3 className="text-lg font-semibold text-orange-900 mb-2">Event Ended</h3>
-            <p className="text-orange-700 text-sm">
-              This event ended on {new Date(event.endTime).toLocaleDateString()}. Registration is no longer available.
-            </p>
-          </div>
+          <p>Please <Link to="/login" className="text-primary underline">login</Link> to view event actions.</p>
         </CardContent>
       </Card>
     );
@@ -126,21 +145,137 @@ export const EventActions: React.FC<EventActionsProps> = ({
   return (
     <Card>
       <CardContent className="p-6">
-        <div className="text-center">
-          <UserPlus className="w-12 h-12 text-primary mx-auto mb-3" />
-          <h3 className="text-lg font-semibold mb-2">Register for This Event</h3>
-          <p className="text-muted-foreground mb-4">
-            Join this exciting event and be part of the experience.
-          </p>
-          <Button
-            onClick={handleRegister}
-            disabled={isRegistering}
-            size="lg"
-          >
-            {isRegistering ? 'Registering...' : 'Register Now'}
-          </Button>
+        <div className="space-y-4">
+          {/* Status Display */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-muted-foreground" />
+              <h3 className="font-medium">Status</h3>
+            </div>
+            <Badge variant="secondary">
+              {event.status} - {formatDate(event.startDate)}
+            </Badge>
+          </div>
+
+          {/* Registration Section */}
+          {!isRegistered && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Flag className="w-4 h-4 text-primary" />
+                <h3 className="font-medium">Registration</h3>
+              </div>
+              <Button 
+                onClick={handleRegister} 
+                variant="outline" 
+                className="w-full"
+                disabled={isRegistering}
+              >
+                {isRegistering ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Registering...
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="w-4 h-4 mr-2" />
+                    Register for Event
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+
+          {/* Team Section */}
+          {isTeamEvent && isRegistered && !hasTeam && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-primary" />
+                <h3 className="font-medium">Teams</h3>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => setIsCreateTeamDialogOpen(true)} 
+                  variant="outline" 
+                  className="w-1/2"
+                  disabled={isCreating}
+                >
+                  Create Team
+                </Button>
+                <Button 
+                  onClick={() => setIsJoinTeamDialogOpen(true)} 
+                  variant="secondary" 
+                  className="w-1/2"
+                  disabled={isJoining}
+                >
+                  Join Team
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Submission Section */}
+          {canSubmit && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-primary" />
+                <h3 className="font-medium">Submit to Competition</h3>
+              </div>
+              <Button 
+                onClick={() => setIsSubmissionDialogOpen(true)} 
+                variant="outline" 
+                className="w-full"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <FileText className="w-4 h-4 mr-2" />
+                    Submit Solution
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+
+          {/* Competition Results Section */}
+          {event.competition && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-4 h-4 text-primary" />
+                <h3 className="font-medium">Competition Results</h3>
+              </div>
+              
+              <Button 
+                asChild 
+                variant="outline" 
+                className="w-full"
+              >
+                <Link to={getLeaderboardLink()}>
+                  <Trophy className="w-4 h-4 mr-2" />
+                  View Leaderboard
+                </Link>
+              </Button>
+            </div>
+          )}
         </div>
       </CardContent>
+      
+      {/* Dialogs */}
+      <TeamCreateDialog open={isCreateTeamDialogOpen} onOpenChange={setIsCreateTeamDialogOpen} onCreate={handleCreateTeam} />
+      <TeamJoinDialog open={isJoinTeamDialogOpen} onOpenChange={setIsJoinTeamDialogOpen} onJoin={handleJoinTeam} eventId={event.id} />
+      <SubmissionDialog open={isSubmissionDialogOpen} onOpenChange={setIsSubmissionDialogOpen} onSubmit={handleSubmit} />
     </Card>
   );
 };
+
+export default EventActions;
