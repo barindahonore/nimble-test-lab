@@ -34,6 +34,15 @@ export const CompetitionMainSection: React.FC<CompetitionMainSectionProps> = ({
 
   const isTeamBased = event.competition?.isTeamBased ?? false;
 
+  console.log('CompetitionMainSection render:', {
+    eventId: event.id,
+    competitionId,
+    isTeamBased,
+    hasCompetition: !!event.competition,
+    userSubmission,
+    teamStatus
+  });
+
   const handleTeamSuccess = () => {
     onTeamUpdate();
   };
