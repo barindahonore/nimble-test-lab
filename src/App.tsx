@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,6 +14,7 @@ import StudentDashboard from "./pages/student/DashboardPage";
 import ProfilePage from "./pages/student/ProfilePage";
 import StudentEventsPage from "./pages/student/EventsPage";
 import StudentEventDetailPage from "./pages/student/EventDetailPage";
+import StudentLeaderboardPage from "./pages/student/LeaderboardPage";
 import JudgeLayout from "./components/layouts/JudgeLayout";
 import JudgeDashboard from "./pages/judge/DashboardPage";
 import EventsPage from "./pages/judge/EventsPage";
@@ -57,6 +59,7 @@ const App = () => (
               <Route path="dashboard" element={<StudentDashboard />} />
               <Route path="events" element={<StudentEventsPage />} />
               <Route path="events/:id" element={<StudentEventDetailPage />} />
+              <Route path="events/:id/leaderboard" element={<StudentLeaderboardPage />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="teams" element={<MyTeamsPage />} />
             </Route>
