@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, UserPlus, LogIn, Clock } from 'lucide-react';
+import { CheckCircle, UserPlus, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -52,9 +52,6 @@ export const EventActions: React.FC<EventActionsProps> = ({
     }
   };
 
-  // Check if event has ended
-  const hasEnded = new Date(event.endTime) < new Date();
-
   if (!user) {
     return (
       <Card>
@@ -65,9 +62,9 @@ export const EventActions: React.FC<EventActionsProps> = ({
             <p className="text-muted-foreground mb-4">
               You need to be logged in to register for events.
             </p>
-            <Button onClick={() => navigate('/login')} disabled={hasEnded}>
+            <Button onClick={() => navigate('/login')}>
               <LogIn className="w-4 h-4 mr-2" />
-              {hasEnded ? 'Event Ended' : 'Login to Register'}
+              Login to Register
             </Button>
           </div>
         </CardContent>
@@ -101,22 +98,6 @@ export const EventActions: React.FC<EventActionsProps> = ({
         <CardContent className="p-6">
           <div className="text-center">
             <p className="text-destructive font-medium">This event has been cancelled.</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (hasEnded) {
-    return (
-      <Card className="border-orange-200 bg-orange-50">
-        <CardContent className="p-6">
-          <div className="text-center">
-            <Clock className="w-12 h-12 text-orange-600 mx-auto mb-3" />
-            <h3 className="text-lg font-semibold text-orange-900 mb-2">Event Has Ended</h3>
-            <p className="text-orange-700 text-sm">
-              Registration is no longer available for this event.
-            </p>
           </div>
         </CardContent>
       </Card>

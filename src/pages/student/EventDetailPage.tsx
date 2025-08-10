@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,22 +9,6 @@ import { EventHeader } from '@/components/events/EventHeader';
 import { EventActions } from '@/components/events/EventActions';
 import { CompetitionInfo } from '@/components/events/CompetitionInfo';
 import { TeamSection } from '@/components/events/TeamSection';
-
-// Create a wrapper for CompetitionInfo to use student leaderboard route
-const StudentCompetitionInfo: React.FC<{
-  competition: any;
-  eventEndTime?: string;
-}> = ({ competition, eventEndTime }) => {
-  const hasEnded = eventEndTime ? new Date(eventEndTime) < new Date() : false;
-  
-  return (
-    <CompetitionInfo 
-      competition={competition} 
-      eventEndTime={eventEndTime}
-      leaderboardRoute={`/student/competitions/${competition.eventId}/leaderboard`}
-    />
-  );
-};
 
 const StudentEventDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -137,7 +120,7 @@ const StudentEventDetailPage = () => {
         />
         
         {event.competition && (
-          <StudentCompetitionInfo 
+          <CompetitionInfo 
             competition={event.competition} 
             eventEndTime={event.endTime}
           />
