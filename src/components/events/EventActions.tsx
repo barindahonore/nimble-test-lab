@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, UserPlus, LogIn } from 'lucide-react';
+import { CheckCircle, UserPlus, LogIn, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -52,6 +52,11 @@ export const EventActions: React.FC<EventActionsProps> = ({
     }
   };
 
+  // Check if event has ended
+  const eventEndTime = new Date(event.endTime);
+  const currentTime = new Date();
+  const hasEventEnded = currentTime > eventEndTime;
+
   if (!user) {
     return (
       <Card>
@@ -98,6 +103,25 @@ export const EventActions: React.FC<EventActionsProps> = ({
         <CardContent className="p-6">
           <div className="text-center">
             <p className="text-destructive font-medium">This event has been cancelled.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (hasEventEnded) {
+    return (
+      <Card className="border-orange-200 bg-orange-50">
+        <CardContent className="p-6">
+          <div className="text-center">
+            <Clock className="w-12 h-12 text-orange-600 mx-auto mb-3" />
+            <h3 className="text-lg font-semibold text-orange-900 mb-2">Event Has Ended</h3>
+            <p className="text-orange-700 text-sm">
+              This event ended on {eventEndTime.toLocaleDateString()} at {eventEndTime.toLocaleTimeString()}
+            </p>
+            <p className="text-orange-600 text-sm mt-2">
+              Registration is no longer available.
+            </p>
           </div>
         </CardContent>
       </Card>
