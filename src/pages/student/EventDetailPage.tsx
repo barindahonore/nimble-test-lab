@@ -113,7 +113,7 @@ const StudentEventDetailPage = () => {
                 {event.competition && (
                   <div className="flex items-center gap-2">
                     <Trophy className="w-4 h-4 text-muted-foreground" />
-                    <span>{event.competition.name}</span>
+                    <span>Competition Event</span>
                   </div>
                 )}
                 <div className="flex items-center gap-2">
