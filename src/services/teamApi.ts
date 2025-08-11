@@ -1,3 +1,4 @@
+
 import api from './api';
 
 // Team interfaces
@@ -37,23 +38,6 @@ export interface MyTeamsResponse {
 export const getMyTeams = async (): Promise<MyTeam[]> => {
   const response = await api.get<MyTeamsResponse>('/teams/my-teams');
   return response.data.data;
-};
-
-// Get my team for a specific event
-export const getMyTeamForEvent = async (eventId: string): Promise<MyTeam | null> => {
-  try {
-    const response = await api.get<MyTeamsResponse>('/teams/my-teams');
-    const teams = response.data.data;
-    
-    // Find team for this specific event
-    const team = teams.find(team => team.competition.event.id === eventId);
-    return team || null;
-  } catch (error: any) {
-    if (error.response?.status === 404) {
-      return null;
-    }
-    throw error;
-  }
 };
 
 // Create a new team

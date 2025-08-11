@@ -1,132 +1,140 @@
 
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Calendar, MapPin, Users, Clock, Trophy } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { useState, useEffect } from 'react';
+import { useParams, Navigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { getEventById, getEventRegistrationStatus } from '@/services/api';
-import { getMyTeamForEvent } from '@/services/teamApi';
-import EventActions from '@/components/events/EventActions';
-import { EventHeader } from '@/components/events/EventHeader';
-import { CompetitionInfo } from '@/components/events/CompetitionInfo';
 import { useAuth } from '@/context/AuthContext';
-import { formatDate } from '@/lib/utils';
+import { getEventById, Event, EventRegistration, getMyEventRegistration } from '@/services/api';
+import { getMyTeams, MyTeam } from '@/services/teamApi';
+import { EventHeader } from '@/components/events/EventHeader';
+import { EventActions } from '@/components/events/EventActions';
+import { CompetitionInfo } from '@/components/events/CompetitionInfo';
+import { TeamSection } from '@/components/events/TeamSection';
 
-const EventDetailPage: React.FC = () => {
-  const { eventId } = useParams<{ eventId: string }>();
+const EventDetailPage = () => {
+  const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  
+  const [event, setEvent] = useState<Event | null>(null);
+  const [registration, setRegistration] = useState<EventRegistration | null>(null);
+  const [teamStatus, setTeamStatus] = useState<MyTeam | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const { data: event, isLoading: isEventLoading, error: eventError } = useQuery({
-    queryKey: ['event', eventId],
-    queryFn: () => getEventById(eventId || ''),
-    enabled: !!eventId,
-  });
-
-  const { data: registrationStatus, isLoading: isRegistrationLoading, error: registrationError, refetch: refetchRegistration } = useQuery({
-    queryKey: ['registrationStatus', eventId, user?.id],
-    queryFn: () => getEventRegistrationStatus(eventId || ''),
-    enabled: !!eventId && !!user?.id,
-  });
-
-  const { data: teamStatus, isLoading: isTeamLoading, error: teamError, refetch: refetchTeam } = useQuery({
-    queryKey: ['teamStatus', eventId, user?.id],
-    queryFn: () => getMyTeamForEvent(eventId || ''),
-    enabled: !!eventId && !!user?.id && !!event?.competition?.isTeamBased,
-  });
-
-  const onRegistrationSuccess = () => {
-    refetchRegistration();
-    refetchTeam();
+  const fetchData = async () => {
+    if (!id) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Always fetch event details
+      const eventData = await getEventById(id);
+      setEvent(eventData);
+      
+      // Only fetch user-specific data if logged in
+      if (user) {
+        try {
+          const registrationData = await getMyEventRegistration(id);
+          setRegistration(registrationData);
+          
+          // If registered and it's a team-based competition, get team info
+          if (registrationData && eventData.competition?.isTeamBased) {
+            const teams = await getMyTeams();
+            const relevantTeam = teams.find(team => 
+              team.competition.event.id === eventData.id
+            );
+            setTeamStatus(relevantTeam || null);
+          }
+        } catch (userDataError) {
+          console.log('User data fetch failed (user may not be registered):', userDataError);
+          // Don't set error state for user-specific data failures
+        }
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to load event details');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  if (isEventLoading) {
+  const handleTeamUpdate = async () => {
+    if (!user || !event?.competition?.isTeamBased) return;
+    
+    try {
+      const teams = await getMyTeams();
+      const relevantTeam = teams.find(team => 
+        team.competition.event.id === event.id
+      );
+      setTeamStatus(relevantTeam || null);
+    } catch (error) {
+      console.error('Failed to refresh team data:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [id, user]);
+
+  if (!id) {
+    return <Navigate to="/events" replace />;
+  }
+
+  if (isLoading) {
     return (
-      <div className="container mx-auto p-6">
-        <Card>
-          <CardHeader>
-            <CardTitle><Skeleton className="h-6 w-64" /></CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <Skeleton className="h-4 w-48" />
-              <Skeleton className="h-4 w-64" />
-              <Skeleton className="h-4 w-32" />
-            </div>
-          </CardContent>
-        </Card>
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="space-y-6">
+          <div className="h-48 bg-muted animate-pulse rounded-lg" />
+          <div className="h-32 bg-muted animate-pulse rounded-lg" />
+          <div className="h-40 bg-muted animate-pulse rounded-lg" />
+        </div>
       </div>
     );
   }
 
-  if (eventError) {
+  if (error || !event) {
     return (
-      <div className="container mx-auto p-6">
-        <Alert variant="destructive">
-          <AlertDescription>
-            {eventError.message || 'Failed to load event details.'}
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
-  if (!event) {
-    return (
-      <div className="container mx-auto p-6">
-        <Alert variant="destructive">
-          <AlertDescription>
-            Event not found.
-          </AlertDescription>
-        </Alert>
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-bold text-destructive mb-4">
+            {error || 'Event not found'}
+          </h2>
+          <p className="text-muted-foreground">
+            The event you're looking for might have been removed or is currently unavailable.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-4">
-      <EventHeader event={event} />
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2">
-          {/* Event Details Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>About this Event</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-muted-foreground" />
-                <span>{formatDate(event.startTime)} - {formatDate(event.endTime)}</span>
-              </div>
-              {event.location && (
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-muted-foreground" />
-                  <span>{event.location}</span>
-                </div>
-              )}
-              <p>{event.description}</p>
-            </CardContent>
-          </Card>
-
-          {/* Competition Information */}
-          {event.competition && (
-            <CompetitionInfo competition={event.competition} />
-          )}
-        </div>
-
-        {/* Event Actions */}
-        <div>
-          <EventActions 
-            event={event} 
-            user={user}
-            registrationStatus={registrationStatus || null}
-            teamStatus={teamStatus || null}
-            onRegistrationSuccess={onRegistrationSuccess}
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="space-y-6">
+        <EventHeader event={event} />
+        
+        <EventActions
+          event={event}
+          user={user}
+          registrationStatus={registration}
+          teamStatus={teamStatus}
+          onRegistrationSuccess={fetchData}
+        />
+        
+        {event.competition && (
+          <CompetitionInfo 
+            competition={event.competition} 
+            eventEndTime={event.endTime}
           />
-        </div>
+        )}
+        
+        {user && registration && event.competition && (
+          <TeamSection
+            teamStatus={teamStatus}
+            isTeamBased={event.competition.isTeamBased}
+            competitionId={event.competition.id}
+            onTeamUpdate={handleTeamUpdate}
+          />
+        )}
       </div>
     </div>
   );
