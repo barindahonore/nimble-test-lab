@@ -8,9 +8,6 @@ import {
   LogOut,
   Home,
   FileText,
-  Award,
-  Target,
-  BarChart3,
   User,
   Users
 } from "lucide-react";
@@ -41,8 +38,6 @@ function StudentSidebar() {
     { title: "My Events", url: "/student/events", icon: Trophy },
     { title: "My Teams", url: "/student/teams", icon: Users },
     { title: "Submissions", url: "/student/submissions", icon: FileText },
-    { title: "Achievements", url: "/student/achievements", icon: Award },
-    { title: "Progress", url: "/student/progress", icon: BarChart3 },
     { title: "Profile", url: "/student/profile", icon: User },
   ];
 
