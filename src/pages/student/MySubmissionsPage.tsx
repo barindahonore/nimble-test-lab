@@ -1,11 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import { FileText, Trophy, AlertCircle, Loader2 } from 'lucide-react';
+import { FileText, Trophy, AlertCircle, Loader2, ExternalLink, Eye } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { format } from 'date-fns';
 import api from '@/services/api';
-import SubmissionCard from '@/components/student/SubmissionCard';
 
 interface Submission {
   id: string;
@@ -30,6 +33,8 @@ const MySubmissionsPage: React.FC = () => {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchSubmissions = async () => {
@@ -54,6 +59,21 @@ const MySubmissionsPage: React.FC = () => {
     setError(null);
     setIsLoading(true);
     window.location.reload();
+  };
+
+  const formatDate = (dateString: string) => {
+    return format(new Date(dateString), 'MMM d, yyyy');
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 90) return 'text-green-600 dark:text-green-400';
+    if (score >= 70) return 'text-yellow-600 dark:text-yellow-400';
+    return 'text-red-600 dark:text-red-400';
+  };
+
+  const handleViewSubmission = (submission: Submission) => {
+    setSelectedSubmission(submission);
+    setIsModalOpen(true);
   };
 
   if (isLoading) {
@@ -121,11 +141,83 @@ const MySubmissionsPage: React.FC = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {submissions.map((submission) => (
-            <SubmissionCard key={submission.id} submission={submission} />
-          ))}
-        </div>
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Competition</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Submitted</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Score</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {submissions.map((submission) => (
+                  <TableRow key={submission.id}>
+                    <TableCell className="font-medium">
+                      {submission.competition.event.title}
+                    </TableCell>
+                    <TableCell>
+                      {submission.team ? (
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary">Team</Badge>
+                          <span className="text-sm text-muted-foreground">
+                            {submission.team.name}
+                          </span>
+                        </div>
+                      ) : (
+                        <Badge variant="outline">Individual</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {formatDate(submission.submittedAt)}
+                    </TableCell>
+                    <TableCell>
+                      {submission.finalScore !== null ? (
+                        <Badge variant="default">Evaluated</Badge>
+                      ) : (
+                        <Badge variant="secondary">Pending</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {submission.finalScore !== null ? (
+                        <span className={`font-bold ${getScoreColor(submission.finalScore)}`}>
+                          {submission.finalScore}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewSubmission(submission)}
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          View
+                        </Button>
+                        {submission.finalScore !== null && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => window.open(`/competitions/${submission.competition.id}/leaderboard`, '_blank')}
+                          >
+                            <Trophy className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       )}
 
       {/* Summary Stats */}
@@ -155,6 +247,63 @@ const MySubmissionsPage: React.FC = () => {
           </Card>
         </div>
       )}
+
+      {/* Submission Detail Modal */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedSubmission?.competition.event.title}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedSubmission && (
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-medium mb-2">Submission Details</h4>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <p>Submitted: {formatDate(selectedSubmission.submittedAt)}</p>
+                  <p>
+                    Type: {selectedSubmission.team 
+                      ? `Team Submission (${selectedSubmission.team.name})` 
+                      : 'Individual Submission'
+                    }
+                  </p>
+                  {selectedSubmission.finalScore !== null && (
+                    <p>
+                      Score: <span className={getScoreColor(selectedSubmission.finalScore)}>
+                        {selectedSubmission.finalScore}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              </div>
+              
+              {selectedSubmission.content && (
+                <div>
+                  <h4 className="font-medium mb-2">Content</h4>
+                  {selectedSubmission.content.url && (
+                    <div className="mb-2">
+                      <Button 
+                        variant="link" 
+                        className="p-0 h-auto text-primary"
+                        onClick={() => window.open(selectedSubmission.content.url, '_blank')}
+                      >
+                        <ExternalLink className="w-4 h-4 mr-1" />
+                        {selectedSubmission.content.url}
+                      </Button>
+                    </div>
+                  )}
+                  {selectedSubmission.content.description && (
+                    <div className="text-sm text-muted-foreground bg-muted p-3 rounded">
+                      {selectedSubmission.content.description}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
