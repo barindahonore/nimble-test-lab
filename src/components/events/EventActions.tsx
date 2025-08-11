@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useToast } from "@/components/ui/use-toast"
@@ -6,33 +7,41 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from "@/components/ui/badge"
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
-import { Event } from '@/services/api';
+import { Event, registerForEvent, EventRegistration } from '@/services/api';
+import { joinTeam, createTeam, MyTeam, createSubmission } from '@/services/teamApi';
 import { formatDate } from '@/lib/utils';
 import { useMutation } from '@tanstack/react-query';
-import { registerForEvent, joinTeam, createTeam, submitToCompetition } from '@/services/api';
 import TeamCreateDialog from '../teams/TeamCreateDialog';
 import TeamJoinDialog from '../teams/TeamJoinDialog';
 import SubmissionDialog from '../submissions/SubmissionDialog';
 
 interface EventActionsProps {
   event: Event;
-  onJoinTeam?: () => void;
-  onCreateTeam?: () => void;
-  onRegister?: () => void;
-  onSubmit?: () => void;
+  user: any;
+  registrationStatus: EventRegistration | null;
+  teamStatus: MyTeam | null;
+  onRegistrationSuccess: () => void;
 }
 
-const EventActions: React.FC<EventActionsProps> = ({ event, onJoinTeam, onCreateTeam, onRegister, onSubmit }) => {
-  const { user } = useAuth();
+const EventActions: React.FC<EventActionsProps> = ({ 
+  event, 
+  user,
+  registrationStatus,
+  teamStatus,
+  onRegistrationSuccess
+}) => {
   const { toast } = useToast()
   const [isCreateTeamDialogOpen, setIsCreateTeamDialogOpen] = React.useState(false);
   const [isJoinTeamDialogOpen, setIsJoinTeamDialogOpen] = React.useState(false);
   const [isSubmissionDialogOpen, setIsSubmissionDialogOpen] = React.useState(false);
 
-  const isRegistered = event.participants?.some(participant => participant.userId === user?.id);
-  const isTeamEvent = event.type === 'TEAM';
-  const hasTeam = user?.teamMemberships?.some(teamMembership => teamMembership.team.eventId === event.id);
-  const canSubmit = event.competition && isRegistered && (event.competition.submissionType === 'TEAM' ? hasTeam : true);
+  const isRegistered = !!registrationStatus;
+  const isTeamEvent = event.competition?.isTeamBased;
+  const hasTeam = !!teamStatus;
+  const canSubmit = event.competition && isRegistered && (isTeamEvent ? hasTeam : true);
+  
+  // Check if event has ended
+  const isEventEnded = new Date(event.endTime) < new Date();
 
   const { mutate: register, isPending: isRegistering } = useMutation({
     mutationFn: () => registerForEvent(event.id),
@@ -41,7 +50,7 @@ const EventActions: React.FC<EventActionsProps> = ({ event, onJoinTeam, onCreate
         title: "Registration Successful",
         description: "You have successfully registered for this event.",
       })
-      onRegister?.();
+      onRegistrationSuccess();
     },
     onError: (error: any) => {
       toast({
@@ -53,13 +62,13 @@ const EventActions: React.FC<EventActionsProps> = ({ event, onJoinTeam, onCreate
   })
 
   const { mutate: join, isPending: isJoining } = useMutation({
-    mutationFn: (teamId: string) => joinTeam(teamId),
+    mutationFn: (invitationCode: string) => joinTeam(invitationCode),
     onSuccess: () => {
       toast({
         title: "Team Join Successful",
         description: "You have successfully joined this team.",
       })
-      onJoinTeam?.();
+      onRegistrationSuccess();
     },
     onError: (error: any) => {
       toast({
@@ -71,13 +80,13 @@ const EventActions: React.FC<EventActionsProps> = ({ event, onJoinTeam, onCreate
   })
 
   const { mutate: create, isPending: isCreating } = useMutation({
-    mutationFn: (teamName: string) => createTeam(event.id, teamName),
+    mutationFn: (teamName: string) => createTeam(event.competition?.id || '', teamName),
     onSuccess: () => {
       toast({
         title: "Team Creation Successful",
         description: "You have successfully created a team for this event.",
       })
-      onCreateTeam?.();
+      onRegistrationSuccess();
     },
     onError: (error: any) => {
       toast({
@@ -89,13 +98,13 @@ const EventActions: React.FC<EventActionsProps> = ({ event, onJoinTeam, onCreate
   })
 
   const { mutate: submit, isPending: isSubmitting } = useMutation({
-    mutationFn: (submissionUrl: string) => submitToCompetition(event.competition?.eventId || '', submissionUrl),
+    mutationFn: (submissionUrl: string) => createSubmission(teamStatus?.id || '', { url: submissionUrl, description: '' }),
     onSuccess: () => {
       toast({
         title: "Submission Successful",
         description: "You have successfully submitted to this competition.",
       })
-      onSubmit?.();
+      onRegistrationSuccess();
     },
     onError: (error: any) => {
       toast({
@@ -115,8 +124,8 @@ const EventActions: React.FC<EventActionsProps> = ({ event, onJoinTeam, onCreate
     setIsCreateTeamDialogOpen(false);
   };
 
-  const handleJoinTeam = (teamId: string) => {
-    join(teamId);
+  const handleJoinTeam = (invitationCode: string) => {
+    join(invitationCode);
     setIsJoinTeamDialogOpen(false);
   };
 
@@ -126,7 +135,7 @@ const EventActions: React.FC<EventActionsProps> = ({ event, onJoinTeam, onCreate
   };
 
   const getLeaderboardLink = () => {
-    if (user?.role === 'STUDENT') {
+    if (user?.role?.name === 'STUDENT') {
       return `/student/events/${event.id}/leaderboard`;
     }
     return `/competitions/${event.id}/leaderboard`;
@@ -153,12 +162,12 @@ const EventActions: React.FC<EventActionsProps> = ({ event, onJoinTeam, onCreate
               <h3 className="font-medium">Status</h3>
             </div>
             <Badge variant="secondary">
-              {event.status} - {formatDate(event.startDate)}
+              {event.status} - {formatDate(event.startTime)}
             </Badge>
           </div>
 
           {/* Registration Section */}
-          {!isRegistered && (
+          {!isRegistered && !isEventEnded && (
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Flag className="w-4 h-4 text-primary" />
@@ -185,6 +194,21 @@ const EventActions: React.FC<EventActionsProps> = ({ event, onJoinTeam, onCreate
                   </>
                 )}
               </Button>
+            </div>
+          )}
+
+          {/* Event Ended Message */}
+          {isEventEnded && !isRegistered && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Flag className="w-4 h-4 text-muted-foreground" />
+                <h3 className="font-medium">Registration</h3>
+              </div>
+              <div className="p-3 bg-muted rounded-lg text-center">
+                <p className="text-sm text-muted-foreground">
+                  Registration is no longer available. This event has ended.
+                </p>
+              </div>
             </div>
           )}
 
