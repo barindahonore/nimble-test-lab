@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -9,42 +10,32 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getEventById, getEventRegistrationStatus } from '@/services/api';
 import { getMyTeamForEvent } from '@/services/teamApi';
 import EventActions from '@/components/events/EventActions';
-import EventHeader from '@/components/events/EventHeader';
-import CompetitionInfo from '@/components/events/CompetitionInfo';
+import { EventHeader } from '@/components/events/EventHeader';
+import { CompetitionInfo } from '@/components/events/CompetitionInfo';
 import { useAuth } from '@/context/AuthContext';
 import { formatDate } from '@/lib/utils';
 
-interface Params {
-  eventId?: string;
-}
-
 const EventDetailPage: React.FC = () => {
-  const { eventId } = useParams<Params>();
+  const { eventId } = useParams<{ eventId: string }>();
   const { user } = useAuth();
 
-  const { data: event, isLoading: isEventLoading, error: eventError } = useQuery(
-    ['event', eventId],
-    () => getEventById(eventId || ''),
-    {
-      enabled: !!eventId,
-    }
-  );
+  const { data: event, isLoading: isEventLoading, error: eventError } = useQuery({
+    queryKey: ['event', eventId],
+    queryFn: () => getEventById(eventId || ''),
+    enabled: !!eventId,
+  });
 
-  const { data: registrationStatus, isLoading: isRegistrationLoading, error: registrationError, refetch: refetchRegistration } = useQuery(
-    ['registrationStatus', eventId, user?.id],
-    () => getEventRegistrationStatus(eventId || ''),
-    {
-      enabled: !!eventId && !!user?.id,
-    }
-  );
+  const { data: registrationStatus, isLoading: isRegistrationLoading, error: registrationError, refetch: refetchRegistration } = useQuery({
+    queryKey: ['registrationStatus', eventId, user?.id],
+    queryFn: () => getEventRegistrationStatus(eventId || ''),
+    enabled: !!eventId && !!user?.id,
+  });
 
-  const { data: teamStatus, isLoading: isTeamLoading, error: teamError, refetch: refetchTeam } = useQuery(
-    ['teamStatus', eventId, user?.id],
-    () => getMyTeamForEvent(eventId || ''),
-    {
-      enabled: !!eventId && !!user?.id && !!event?.competition?.isTeamBased,
-    }
-  );
+  const { data: teamStatus, isLoading: isTeamLoading, error: teamError, refetch: refetchTeam } = useQuery({
+    queryKey: ['teamStatus', eventId, user?.id],
+    queryFn: () => getMyTeamForEvent(eventId || ''),
+    enabled: !!eventId && !!user?.id && !!event?.competition?.isTeamBased,
+  });
 
   const onRegistrationSuccess = () => {
     refetchRegistration();

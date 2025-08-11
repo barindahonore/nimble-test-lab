@@ -340,7 +340,8 @@ export const registerForEvent = async (eventId: string) => {
   return response.data.data;
 };
 
-export const getMyEventRegistration = async (eventId: string): Promise<EventRegistration | null> => {
+// Registration status function
+export const getEventRegistrationStatus = async (eventId: string): Promise<EventRegistration | null> => {
   try {
     const response = await api.get<EventRegistrationResponse>(`/events/${eventId}/registration/me`);
     return response.data.data;

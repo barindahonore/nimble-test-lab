@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -5,9 +6,10 @@ import { Calendar, MapPin, Users, Clock, Trophy } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import EventActions from '@/components/events/EventActions';
-import EventHeader from '@/components/events/EventHeader';
-import CompetitionInfo from '@/components/events/CompetitionInfo';
+import { EventHeader } from '@/components/events/EventHeader';
+import { CompetitionInfo } from '@/components/events/CompetitionInfo';
 import { useAuth } from '@/context/AuthContext';
 import { getEventById, getEventRegistrationStatus } from '@/services/api';
 import { getMyTeamForEvent } from '@/services/teamApi';
@@ -17,31 +19,25 @@ const StudentEventDetailPage = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const { user } = useAuth();
 
-  const { data: event, isLoading: isEventLoading, error: eventError } = useQuery(
-    ['event', eventId],
-    () => getEventById(eventId!),
-    {
-      retry: false,
-    }
-  );
+  const { data: event, isLoading: isEventLoading, error: eventError } = useQuery({
+    queryKey: ['event', eventId],
+    queryFn: () => getEventById(eventId!),
+    retry: false,
+  });
 
-  const { data: registrationStatus, isLoading: isRegistrationLoading, refetch: refetchRegistration } = useQuery(
-    ['registrationStatus', eventId, user?.id],
-    () => getEventRegistrationStatus(eventId!),
-    {
-      enabled: !!user && !!eventId,
-      retry: false,
-    }
-  );
+  const { data: registrationStatus, isLoading: isRegistrationLoading, refetch: refetchRegistration } = useQuery({
+    queryKey: ['registrationStatus', eventId, user?.id],
+    queryFn: () => getEventRegistrationStatus(eventId!),
+    enabled: !!user && !!eventId,
+    retry: false,
+  });
 
-  const { data: teamStatus, isLoading: isTeamLoading, refetch: refetchTeam } = useQuery(
-    ['teamStatus', eventId, user?.id],
-    () => getMyTeamForEvent(eventId!),
-    {
-      enabled: !!user && !!eventId && !!event?.competition?.isTeamBased,
-      retry: false,
-    }
-  );
+  const { data: teamStatus, isLoading: isTeamLoading, refetch: refetchTeam } = useQuery({
+    queryKey: ['teamStatus', eventId, user?.id],
+    queryFn: () => getMyTeamForEvent(eventId!),
+    enabled: !!user && !!eventId && !!event?.competition?.isTeamBased,
+    retry: false,
+  });
 
   const handleRegistrationSuccess = () => {
     refetchRegistration();
@@ -122,11 +118,7 @@ const StudentEventDetailPage = () => {
                 )}
                 <div className="flex items-center gap-2">
                   <Users className="w-4 h-4 text-muted-foreground" />
-                  <span>{event.capacity === 0 ? 'Unlimited' : event.capacity}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-muted-foreground" />
-                  <span>{event.duration}</span>
+                  <span>{event.maxParticipants === 0 ? 'Unlimited' : event.maxParticipants}</span>
                 </div>
                 <div className="prose">
                   {event.description}
