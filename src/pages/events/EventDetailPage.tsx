@@ -1,15 +1,30 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/context/AuthContext';
 import { getEventById, Event, EventRegistration, getMyEventRegistration } from '@/services/api';
 import { getMyTeams, MyTeam } from '@/services/teamApi';
 import { EventHeader } from '@/components/events/EventHeader';
 import { EventActions } from '@/components/events/EventActions';
-import { CompetitionInfo } from '@/components/events/CompetitionInfo';
-import { TeamSection } from '@/components/events/TeamSection';
+import { CompetitionMainSection } from '@/components/events/CompetitionMainSection';
+
+// Individual submission interface
+interface IndividualSubmission {
+  id: string;
+  content: {
+    url: string;
+    description: string;
+  };
+  submittedAt: string;
+  competition: {
+    id: string;
+    event: {
+      id: string;
+      title: string;
+    };
+  };
+  finalScore?: number;
+}
 
 const EventDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,8 +33,35 @@ const EventDetailPage = () => {
   const [event, setEvent] = useState<Event | null>(null);
   const [registration, setRegistration] = useState<EventRegistration | null>(null);
   const [teamStatus, setTeamStatus] = useState<MyTeam | null>(null);
+  const [userSubmission, setUserSubmission] = useState<IndividualSubmission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const fetchUserSubmissions = async () => {
+    try {
+      const response = await fetch('/api/v1/submissions/me', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const submissions = data.data || [];
+        
+        // Find submission for this specific competition
+        const relevantSubmission = submissions.find((sub: IndividualSubmission) => 
+          sub.competition.event.id === id
+        );
+        
+        setUserSubmission(relevantSubmission || null);
+      }
+    } catch (error) {
+      console.log('Failed to fetch user submissions:', error);
+      // Don't set error state for submission fetch failures
+    }
+  };
 
   const fetchData = async () => {
     if (!id) return;
@@ -38,13 +80,19 @@ const EventDetailPage = () => {
           const registrationData = await getMyEventRegistration(id);
           setRegistration(registrationData);
           
-          // If registered and it's a team-based competition, get team info
-          if (registrationData && eventData.competition?.isTeamBased) {
-            const teams = await getMyTeams();
-            const relevantTeam = teams.find(team => 
-              team.competition.event.id === eventData.id
-            );
-            setTeamStatus(relevantTeam || null);
+          // If registered, fetch additional data based on competition type
+          if (registrationData && eventData.competition) {
+            if (eventData.competition.isTeamBased) {
+              // For team-based competitions, get team info
+              const teams = await getMyTeams();
+              const relevantTeam = teams.find(team => 
+                team.competition.event.id === eventData.id
+              );
+              setTeamStatus(relevantTeam || null);
+            } else {
+              // For individual competitions, get user's submission
+              await fetchUserSubmissions();
+            }
           }
         } catch (userDataError) {
           console.log('User data fetch failed (user may not be registered):', userDataError);
@@ -70,6 +118,12 @@ const EventDetailPage = () => {
     } catch (error) {
       console.error('Failed to refresh team data:', error);
     }
+  };
+
+  const handleSubmissionUpdate = async () => {
+    if (!user || !event?.competition || event.competition.isTeamBased) return;
+    
+    await fetchUserSubmissions();
   };
 
   useEffect(() => {
@@ -120,19 +174,14 @@ const EventDetailPage = () => {
           onRegistrationSuccess={fetchData}
         />
         
-        {event.competition && (
-          <CompetitionInfo 
-            competition={event.competition} 
-            eventEndTime={event.endTime}
-          />
-        )}
-        
         {user && registration && event.competition && (
-          <TeamSection
+          <CompetitionMainSection
+            event={event}
+            registration={registration}
             teamStatus={teamStatus}
-            isTeamBased={event.competition.isTeamBased}
-            competitionId={event.competition.id}
+            userSubmission={userSubmission}
             onTeamUpdate={handleTeamUpdate}
+            onSubmissionUpdate={handleSubmissionUpdate}
           />
         )}
       </div>
