@@ -126,6 +126,34 @@ const MySubmissionsPage: React.FC = () => {
         </p>
       </div>
 
+      {/* Summary Stats */}
+      {submissions.length > 0 && (
+        <div className="mb-8 grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardContent className="text-center py-6">
+              <div className="text-2xl font-bold text-primary">{submissions.length}</div>
+              <div className="text-sm text-muted-foreground">Total Submissions</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="text-center py-6">
+              <div className="text-2xl font-bold text-primary">
+                {submissions.filter(s => s.team).length}
+              </div>
+              <div className="text-sm text-muted-foreground">Team Submissions</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="text-center py-6">
+              <div className="text-2xl font-bold text-primary">
+                {submissions.filter(s => s.finalScore !== null).length}
+              </div>
+              <div className="text-sm text-muted-foreground">Evaluated Submissions</div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Content */}
       {submissions.length === 0 ? (
         <Card>
@@ -218,34 +246,6 @@ const MySubmissionsPage: React.FC = () => {
             </Table>
           </CardContent>
         </Card>
-      )}
-
-      {/* Summary Stats */}
-      {submissions.length > 0 && (
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardContent className="text-center py-6">
-              <div className="text-2xl font-bold text-primary">{submissions.length}</div>
-              <div className="text-sm text-muted-foreground">Total Submissions</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="text-center py-6">
-              <div className="text-2xl font-bold text-primary">
-                {submissions.filter(s => s.team).length}
-              </div>
-              <div className="text-sm text-muted-foreground">Team Submissions</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="text-center py-6">
-              <div className="text-2xl font-bold text-primary">
-                {submissions.filter(s => s.finalScore !== null).length}
-              </div>
-              <div className="text-sm text-muted-foreground">Evaluated Submissions</div>
-            </CardContent>
-          </Card>
-        </div>
       )}
 
       {/* Submission Detail Modal */}
